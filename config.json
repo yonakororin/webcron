@@ -1,0 +1,5 @@
+{
+    "db_path": "/var/www/webcron-data/cron.db",
+    "updater_path": "./sh/deploy_cron.sh",
+    "back_url": "../../"
+}

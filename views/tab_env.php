@@ -1,17 +1,17 @@
-<div id="env_settings_inner" class="tab-content" style="display: <?= ($current_tab === 'env_settings' ? 'block' : 'none') ?>;">
+<div id="env_settings_inner" class="tab-content" style="display: block;">
     <div class="settings-section">
-        <h3>システム設定</h3>
+        <h5>システム設定</h5>
         <form method="POST" class="settings-form">
             <input type="hidden" name="update_settings" value="1">
-            <label for="cron_user">Cron実行ユーザー:</label>
-            <input type="text" id="cron_user" name="cron_user" value="<?= htmlspecialchars($cron_user_setting) ?>" required>
+            <label for="cron_user" style="white-space: nowrap;">Cron実行ユーザー:</label>
+            <input type="text" id="cron_user" name="cron_user" value="<?= htmlspecialchars($cron_user_setting) ?>" required style="width: 160px; flex-shrink: 0;">
             <input type="submit" value="設定を保存">
         </form>
         <small style="color: #666;">※ /etc/cron.d/ ファイルに記述される実行ユーザー名です（例: root, www-data）。</small>
     </div>
 
     <div>
-        <h2>環境変数の設定 (crontab冒頭に定義)</h2>
+        <h5>環境変数の設定 (crontab冒頭に定義)</h5>
         <form method="POST">
             <input type="hidden" name="env_add" value="1">
             <div class="env-input-group">
@@ -47,7 +47,7 @@
 
         <hr style="margin: 30px 0; border: 0; border-top: 1px solid #eee;">
 
-        <h2>ラッパースクリプト定義 (変数として埋め込み)</h2>
+        <h5>ラッパースクリプト定義 (変数として埋め込み)</h5>
         <p style="font-size: 13px; color: #666; margin-top: -10px; margin-bottom: 15px;">
             ジョブコマンド内で <code>${変数名}</code> と記述すると、生成時に以下の値に置換されます。
         </p>

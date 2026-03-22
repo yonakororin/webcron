@@ -82,7 +82,7 @@ try {
                 } else {
                     // 通常実行: ランナースクリプト経由で実行
                     $wrapped_cmd = sprintf(
-                        '/usr/bin/php %s %d %s',
+                        'podman exec podman_php_1 /usr/local/bin/php %s %d %s',
                         escapeshellarg($runner_script),
                         $job['id'],
                         escapeshellarg($final_command)

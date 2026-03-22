@@ -1,6 +1,6 @@
-<div id="job_manager_inner" class="tab-content" style="display: <?= ($current_tab === 'job_manager' ? 'block' : 'none') ?>;">
+<div id="job_manager_inner" class="tab-content" style="display: block;">
     <?php if ($job_to_edit): ?>
-    <h2>ジョブID: <?= $job_to_edit['id'] ?> の編集</h2>
+    <h5>ジョブID: <?= $job_to_edit['id'] ?> の編集</h5>
     <form method="POST" id="editJobForm" style="border-color: #007bff;">
         <input type="hidden" name="update" value="1">
         <input type="hidden" name="id" value="<?= $job_to_edit['id'] ?>">
@@ -15,18 +15,10 @@
             <a href="<?= $_SERVER['PHP_SELF'] ?>" class="cancel-button">キャンセル</a>
             <input type="submit" name="delete" value="削除" onclick="return confirm('削除しますか？');" class="delete-submit-button" form="editJobForm">
         </div>
-        <div class="actions-right">
-            <form method="POST" style="margin: 0;">
-                <input type="hidden" name="apply_crontab" value="1">
-                <button type="submit" class="apply-button" onclick="return confirm('現在の設定でサーバーのCrontabを上書き更新します。\nよろしいですか？');">
-                    🔄 Crontabに反映
-                </button>
-            </form>
-        </div>
     </div>
     <hr>
     <?php else: ?>
-    <h2>新規ジョブ追加</h2>
+    <h5>新規ジョブ追加</h5>
     <form method="POST" id="addJobForm">
         <input type="hidden" name="add" value="1">
         <div class="form-group"><label>スケジュール (例: * * * * *)</label><input type="text" name="schedule" placeholder="* * * * *" required></div>
@@ -35,21 +27,13 @@
     </form>
     
     <div class="form-actions">
-        <div class="actions-left">
+        <div class="actions-right" style="margin-left: auto;">
             <input type="submit" value="ジョブを追加" form="addJobForm">
-        </div>
-        <div class="actions-right">
-            <form method="POST" style="margin: 0;">
-                <input type="hidden" name="apply_crontab" value="1">
-                <button type="submit" class="apply-button" onclick="return confirm('現在の設定でサーバーのCrontabを上書き更新します。\nよろしいですか？');">
-                    🔄 Crontabに反映
-                </button>
-            </form>
         </div>
     </div>
     <?php endif; ?>
 
-    <h2>登録済みジョブ一覧 (<?= count($jobs) ?>件)</h2>
+    <h5>登録済みジョブ一覧 (<?= count($jobs) ?>件)</h5>
     <input type="text" id="searchKeyword" placeholder='検索... (例: php !"Err: 0")'>
     <div class="job-table-wrapper">
         <table id="jobTable">

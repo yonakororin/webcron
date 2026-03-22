@@ -46,7 +46,7 @@ if (file_exists($config_file)) {
     if (is_array($loaded_config)) $config = array_merge($config, $loaded_config);
 }
 
-$db_file = __DIR__ . '/' . $config['db_path'];
+$db_file = ($config['db_path'][0] === '/') ? $config['db_path'] : __DIR__ . '/' . $config['db_path'];
 $updater_script = __DIR__ . '/' . $config['updater_path'];
 $back_url = $config['back_url'];
 

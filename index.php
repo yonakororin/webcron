@@ -1,10 +1,13 @@
-<?php session_start(); ?>
+<?php
+session_start();
+require_once __DIR__ . '/common.php';
+?>
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>yoWebCron ジョブ管理</title>
+  <title>WebCron ジョブ管理</title>
   
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -19,7 +22,7 @@
     .sidebar.closed { width: 60px; min-width: 60px; }
     .sidebar.closed .sidebar-content,
     .sidebar.closed .sidebar-title { display: none; }
-    .main-content { flex: 1; overflow-y: auto; height: 100vh; background: #f8f9fa; }
+    .main-content { flex: 1; overflow-y: auto; height: 100vh; background: #0f172a; color: #f8fafc; }
     .content-pane { display: none; }
     .content-pane.active { display: block; animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -63,6 +66,18 @@
     .glb-progress-label { font-size: 0.9rem; font-weight: 600; color: #334155; margin-bottom: 12px; }
     .glb-progress-bar-wrap { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
     .glb-progress-bar-fill { height: 100%; background: #4f46e5; width: 0%; transition: width 0.3s ease; }
+    .sidebar-nav-link.active { background: rgba(255,255,255,0.15); border-radius: 6px; }
+    #manual-body { color: #e2e8f0; line-height: 1.75; }
+    #manual-body h1, #manual-body h2 { color: #f8fafc; border-bottom: 1px solid rgba(148,163,184,0.2); padding-bottom: 0.3em; margin: 1.5em 0 0.75em; }
+    #manual-body h3, #manual-body h4 { color: #cbd5e1; margin: 1.2em 0 0.5em; }
+    #manual-body code { background: rgba(0,0,0,0.35); color: #a5b4fc; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
+    #manual-body pre { background: rgba(0,0,0,0.35); border: 1px solid rgba(148,163,184,0.2); border-radius: 6px; padding: 14px; overflow-x: auto; }
+    #manual-body pre code { background: none; padding: 0; color: #e2e8f0; }
+    #manual-body table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+    #manual-body th { background: #1e293b; color: #94a3b8; padding: 10px 12px; border: 1px solid rgba(148,163,184,0.2); text-align: left; }
+    #manual-body td { padding: 9px 12px; border: 1px solid rgba(148,163,184,0.2); vertical-align: top; }
+    #manual-body blockquote { border-left: 3px solid #a855f7; margin: 0; padding: 8px 16px; background: rgba(168,85,247,0.08); color: #94a3b8; }
+    #manual-body hr { border: none; border-top: 1px solid rgba(148,163,184,0.2); margin: 2em 0; }
 
   </style>
 </head>
@@ -74,22 +89,26 @@
         <button class="btn btn-outline-light btn-sm" onclick="document.querySelector('.sidebar').classList.toggle('closed')" title="メニューの開閉">
           <span class="material-icons">menu</span>
         </button>
-        <h5 class="sidebar-title text-white fw-bold mb-0 text-truncate">yoWebCron ジョブ管理</h5>
+        <h5 class="sidebar-title text-white fw-bold mb-0 text-truncate">WebCron ジョブ管理</h5>
       </div>
       <ul class="sidebar-content nav flex-column gap-1">
-        
         <li class="nav-item">
-          <a class="nav-link text-white" href="#" onclick="if(typeof event !== 'undefined') event.preventDefault(); showContentDirect('content-0-main')">Cron管理</a>
+          <a class="nav-link text-white sidebar-nav-link" href="#" onclick="if(typeof event !== 'undefined') event.preventDefault(); showContentDirect('content-jobs')" data-target="content-jobs">ジョブ管理</a>
         </li>
-      
+        <li class="nav-item">
+          <a class="nav-link text-white sidebar-nav-link" href="#" onclick="if(typeof event !== 'undefined') event.preventDefault(); showContentDirect('content-env')" data-target="content-env">環境設定</a>
+        </li>
+        <li class="nav-item mt-auto pt-3 border-top border-secondary">
+          <a class="nav-link text-white sidebar-nav-link" href="#" onclick="if(typeof event !== 'undefined') event.preventDefault(); showContentDirect('content-manual')" data-target="content-manual">使い方</a>
+        </li>
       </ul>
     </nav>
 
     <!-- Main Content -->
     <div class="main-content p-4 position-relative">
-      
+
     <div class="dropdown position-absolute" style="top: 16px; right: 24px; z-index: 100;">
-      <button id="user-menu-btn" class="btn btn-outline-secondary rounded-pill d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+      <button id="user-menu-btn" class="btn btn-outline-light rounded-pill d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color:#94a3b8; border-color:rgba(148,163,184,0.3);">
         <span class="material-icons" style="font-size:20px;">account_circle</span>
         <span id="user-name-display">ユーザー名</span>
         <span class="material-icons" style="font-size:16px;">arrow_drop_down</span>
@@ -104,67 +123,36 @@
       </ul>
     </div>
 
-      
-    <div id="content-0-main" class="content-pane">
-      <h3 class="fw-bold mb-3">Cron管理</h3>
-      <ul class="nav nav-tabs mb-3" role="tablist">
-        
-    <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="btn-content-0-main-tab_jobs" data-bs-toggle="tab" data-bs-target="#tab-content-0-main-tab_jobs" type="button" role="tab">ジョブ管理</button>
-    </li>
-  
-    <li class="nav-item" role="presentation">
-      <button class="nav-link " id="btn-content-0-main-tab_env" data-bs-toggle="tab" data-bs-target="#tab-content-0-main-tab_env" type="button" role="tab">環境設定</button>
-    </li>
-  
-      </ul>
-      <div class="tab-content">
-        
-    <div class="tab-pane fade show active" id="tab-content-0-main-tab_jobs" role="tabpanel">
-      <div class="tab-canvas">
-        <div class="component c-html" style="left: 0px; top: 0px; width: calc(100% - 48px); height: 800px; z-index: 1;"><?php require_once 'common.php'; ?>
-<link rel="stylesheet" href="assets/style.css">
-<style>
-  /* Overrides for builder integration */
-  .main-content { min-height: auto; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0; max-width: 100%; }
-  header { display: none; } /* Hide original header as builder has one */
-  .tab { display: none; } /* Hide original tabs as builder has them */
-</style>
-<div class="main-content">
-  <?php if ($message): ?><div class="message success"><?= $message ?></div><?php endif; ?>
-  <?php if ($error): ?><div class="message error">🚨 エラー: <?= htmlspecialchars($error) ?></div><?php endif; ?>
-  <?php require __DIR__ . '/views/tab_jobs.php'; ?>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-<script src="assets/script.js"></script></div>
-      </div>
+    <div id="content-jobs" class="content-pane">
+      <h2 class="fw-bold mb-3" style="color:#f8fafc;">ジョブ管理</h2>
+      <link rel="stylesheet" href="assets/style.css">
+      <?php if ($message): ?><div class="message success"><?= $message ?></div><?php endif; ?>
+      <?php if ($error): ?><div class="message error">🚨 エラー: <?= htmlspecialchars($error) ?></div><?php endif; ?>
+      <?php require __DIR__ . '/views/tab_jobs.php'; ?>
+      <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+      <script src="assets/script.js"></script>
     </div>
-  
-    <div class="tab-pane fade " id="tab-content-0-main-tab_env" role="tabpanel">
-      <div class="tab-canvas">
-        <div class="component c-html" style="left: 0px; top: 0px; width: calc(100% - 48px); height: 800px; z-index: 1;"><?php require_once 'common.php'; ?>
-<link rel="stylesheet" href="assets/style.css">
-<style>
-  .main-content { min-height: auto; background: transparent; border: none; box-shadow: none; margin: 0; padding: 0; max-width: 100%; }
-  header { display: none; }
-  .tab { display: none; }
-</style>
-<div class="main-content">
-  <?php if ($message): ?><div class="message success"><?= $message ?></div><?php endif; ?>
-  <?php if ($error): ?><div class="message error">🚨 エラー: <?= htmlspecialchars($error) ?></div><?php endif; ?>
-  <?php require __DIR__ . '/views/tab_env.php'; ?>
-</div>
-<script src="assets/script.js"></script></div>
-      </div>
+
+    <div id="content-env" class="content-pane">
+      <h2 class="fw-bold mb-3" style="color:#f8fafc;">環境設定</h2>
+      <link rel="stylesheet" href="assets/style.css">
+      <?php if ($message): ?><div class="message success"><?= $message ?></div><?php endif; ?>
+      <?php if ($error): ?><div class="message error">🚨 エラー: <?= htmlspecialchars($error) ?></div><?php endif; ?>
+      <?php require __DIR__ . '/views/tab_env.php'; ?>
+      <script src="assets/script.js"></script>
     </div>
-  
-      </div>
+
+    <div id="content-manual" class="content-pane">
+      <h2 class="fw-bold mb-3" style="color:#f8fafc;">使い方</h2>
+      <link rel="stylesheet" href="assets/style.css">
+      <div id="manual-body" style="max-width: 860px;"></div>
     </div>
-  
+
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
   <script>
     
     window.UI = {
@@ -242,11 +230,14 @@
     }
     function showContent(id) {
       document.querySelectorAll('.content-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.sidebar-nav-link').forEach(el => el.classList.remove('active'));
       const target = document.getElementById(id);
       if (target) {
         target.classList.add('active');
         window.dispatchEvent(new CustomEvent('glbContentShown', { detail: { id: id } }));
       }
+      const navLink = document.querySelector('.sidebar-nav-link[data-target="' + id + '"]');
+      if (navLink) navLink.classList.add('active');
     }
       function showTab(paneId, tabId) {
       const pane = document.getElementById(paneId);
@@ -259,12 +250,22 @@
       window.dispatchEvent(new CustomEvent('glbTabShown', { detail: { paneId: paneId, tabId: tabId } }));
     }
 
+    // マニュアルの遅延読み込み
+    let manualLoaded = false;
+    window.addEventListener('glbContentShown', (e) => {
+      if (e.detail.id === 'content-manual' && !manualLoaded) {
+        manualLoaded = true;
+        fetch('manual.md').then(r => r.text()).then(md => {
+          document.getElementById('manual-body').innerHTML = marked.parse(md);
+        }).catch(() => {
+          document.getElementById('manual-body').innerHTML = '<p style="color:#f87171;">マニュアルの読み込みに失敗しました。</p>';
+        });
+      }
+    });
+
     // Automatically open the first menu item on load
     document.addEventListener('DOMContentLoaded', () => {
-      const firstPane = document.querySelector('.content-pane');
-      if (firstPane) {
-        showContentDirect(firstPane.id);
-      }
+      showContentDirect('content-jobs');
     });
   </script>
   <script src="js/main.js"></script>

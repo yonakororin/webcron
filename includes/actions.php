@@ -2,6 +2,15 @@
 $message = '';
 $error = '';
 
+// Crontab自動反映ヘルパー
+function _apply_crontab_auto($updater_script) {
+    if (file_exists($updater_script)) {
+        $output = [];
+        $return_var = 0;
+        exec($updater_script . ' 2>&1', $output, $return_var);
+    }
+}
+
 // 実行ユーザー設定の更新処理
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_settings'])) {
     $cron_user = trim($_POST['cron_user']);
@@ -19,34 +28,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_settings'])) {
     }
 }
 
-// Crontab反映処理
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apply_crontab'])) {
-    // $updater_script は index.php で定義
-    if (file_exists($updater_script)) {
-        $output = [];
-        $return_var = 0;
-        $cmd = 'sudo ' . $updater_script . ' 2>&1';
-        exec($cmd, $output, $return_var);
-        
-        if ($return_var === 0) {
-            $output_str = implode("\n", $output);
-            $msg_text = empty($output_str) ? "設定を反映しました。" : $output_str;
-            header('Location: ' . $_SERVER['PHP_SELF'] . '?msg=applied&detail=' . urlencode($msg_text));
-            exit;
-        } else {
-            $error = "更新失敗 (Code: $return_var):<br>" . nl2br(htmlspecialchars(implode("\n", $output)));
-        }
-    } else {
-        $error = "更新スクリプトが見つかりません: " . htmlspecialchars($updater_script);
-    }
-}
-
 // C. ジョブの削除処理
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete']) && isset($_POST['id'])) {
     $job_id = (int)$_POST['id'];
     try {
         $stmt = $db->prepare("DELETE FROM jobs WHERE id = ?");
         $stmt->execute([$job_id]);
+        _apply_crontab_auto($updater_script);
         header('Location: ' . $_SERVER['PHP_SELF'] . '?msg=deleted');
         exit;
     } catch (PDOException $e) { $error = "削除失敗: " . $e->getMessage(); }
@@ -64,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update']) && !isset($
         try {
             $stmt = $db->prepare("UPDATE jobs SET command = ?, schedule = ?, description = ? WHERE id = ?");
             $stmt->execute([$command, $schedule, $description, $id]);
+            _apply_crontab_auto($updater_script);
             header('Location: ' . $_SERVER['PHP_SELF'] . '?msg=updated');
             exit; 
         } catch (PDOException $e) { $error = "更新失敗: " . $e->getMessage(); }
@@ -81,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add'])) {
         try {
             $stmt = $db->prepare("INSERT INTO jobs (command, schedule, description) VALUES (?, ?, ?)");
             $stmt->execute([$command, $schedule, $description]);
+            _apply_crontab_auto($updater_script);
             header('Location: ' . $_SERVER['PHP_SELF'] . '?msg=added');
             exit; 
         } catch (PDOException $e) { $error = "追加失敗: " . $e->getMessage(); }
@@ -100,7 +90,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['env_add'])) {
         try {
             $stmt = $db->prepare("INSERT INTO environment_variables (name, value, description) VALUES (?, ?, ?) ON CONFLICT(name) DO UPDATE SET value=excluded.value, description=excluded.description");
             $stmt->execute([$name, $value, $description]);
-            header('Location: ' . $_SERVER['PHP_SELF'] . '?tab=env_settings&msg=env_added'); 
+            _apply_crontab_auto($updater_script);
+            header('Location: ' . $_SERVER['PHP_SELF'] . '?tab=env_settings&msg=env_added');
             exit; 
         } catch (PDOException $e) { $error = "環境変数登録失敗: " . $e->getMessage(); }
     }
@@ -112,7 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['env_delete']) && isse
     try {
         $stmt = $db->prepare("DELETE FROM environment_variables WHERE id = ?");
         $stmt->execute([$env_id]);
-        header('Location: ' . $_SERVER['PHP_SELF'] . '?tab=env_settings&msg=env_deleted'); 
+        _apply_crontab_auto($updater_script);
+        header('Location: ' . $_SERVER['PHP_SELF'] . '?tab=env_settings&msg=env_deleted');
         exit;
     } catch (PDOException $e) { $error = "環境変数削除失敗: " . $e->getMessage(); }
 }
