@@ -85,6 +85,52 @@ crontab ファイルの先頭に書き込まれる変数を管理します。
 
 ---
 
+## アラートスクリプト
+
+異常終了時に通知を送るラッパースクリプトを `sh/` 以下に用意しています。
+ジョブのコマンドをこれらのスクリプトで包むことで、失敗時に自動アラートを送れます。
+
+| ファイル | 送信先 |
+|---|---|
+| `sh/alert_discord.sh` | Discord (Embed形式) |
+| `sh/alert_googlechat.sh` | Google Chat |
+| `sh/alert_slack.sh` | Slack |
+| `sh/alert_mattermost.sh` | Mattermost |
+
+### 共通の使い方
+
+全スクリプトで `WEBHOOK_URL` 環境変数を使います。
+
+```bash
+export WEBHOOK_URL=https://...your-webhook-url...
+bash /path/to/alert_discord.sh <実行コマンド> [引数...]
+```
+
+ジョブコマンドへの組み込み例:
+
+```
+export WEBHOOK_URL=https://hooks.slack.com/services/xxx; bash /opt/webcron/sh/alert_slack.sh /usr/bin/python3 /opt/scripts/batch.py
+```
+
+### オプション: 環境名の表示
+
+`RESERVED_ALERT_ENV` を設定すると、アラートメッセージに環境名が表示されます。
+
+```bash
+export RESERVED_ALERT_ENV=production
+```
+
+### 各サービスのペイロード形式
+
+| サービス | 形式 | 備考 |
+|---|---|---|
+| Discord | `embeds` (Embed) | フィールドで構造化、赤色 |
+| Google Chat | `text` (プレーンテキスト) | Markdown記法 |
+| Slack | `attachments` + `fields` | Incoming Webhook |
+| Mattermost | `attachments` + `fields` | Slack互換、`username`/`icon_emoji` 付き |
+
+---
+
 ## 内部動作
 
 ### crontab 自動反映の仕組み
@@ -110,11 +156,24 @@ SHELL=/bin/bash
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 VARNAME="value"   ← 環境変数
 
-* * * * * root podman exec podman_php_1 php /path/to/cron_runner.php <id> <command>
+* * * * * ubuntu bash '/opt/webcron/sh/host_runner.sh' <id> '<command>'
 ```
 
-- 通常のジョブは `cron_runner.php` 経由で実行され、開始・終了時刻と終了コードが DB に記録されます
+- 通常のジョブはホスト側の `host_runner.sh` 経由で実行されます
+- `host_runner.sh` はコマンドをホスト上の bash で実行し、開始・終了時刻と終了コードをコンテナ内の `log_job.php` 経由で DB に記録します
 - `#` で始まるコマンドはランナーを通さずそのまま出力されます
+
+### ジョブ実行フロー
+
+```
+cron
+ └─ bash host_runner.sh <job_id> <command>   (ホスト側で実行)
+      ├─ podman exec php log_job.php start    (開始時刻をDBに記録)
+      ├─ eval <command>                       (コマンド本体をホストで実行)
+      └─ podman exec php log_job.php end      (終了時刻・終了コードをDBに記録)
+```
+
+ホスト側で実行することで、bash が利用でき、ホストのファイルパスへも直接アクセスできます。
 
 ### データ保存先
 
@@ -124,6 +183,9 @@ VARNAME="value"   ← 環境変数
 ```json
 {
   "db_path": "/var/www/webcron-data/cron.db",
-  "updater_path": "./sh/deploy_cron.sh"
+  "updater_path": "./sh/deploy_cron.sh",
+  "host_runner": "/opt/webcron/sh/host_runner.sh"
 }
 ```
+
+`host_runner` にはホスト上の `host_runner.sh` の絶対パスを指定します。
