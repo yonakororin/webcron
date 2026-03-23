@@ -13,29 +13,23 @@ require_once __DIR__ . '/common.php';
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
   <style>
-    body { overflow: hidden; }
-    .sidebar {
-      width: 240px; min-width: 240px; min-height: 100vh;
-      background: #0f172a; transition: width 0.3s, min-width 0.3s;
-      overflow-x: hidden; overflow-y: auto;
+    body { overflow: hidden; background: #0f172a; color: #f8fafc; }
+    .app-header {
+      height: 52px; background: #0f172a; border-bottom: 1px solid rgba(148,163,184,0.15);
+      display: flex; align-items: center; padding: 0 24px; gap: 24px; position: sticky; top: 0; z-index: 50;
     }
-    .sidebar.closed { width: 60px; min-width: 60px; }
-    .sidebar.closed .sidebar-content,
-    .sidebar.closed .sidebar-title { display: none; }
-    .main-content { flex: 1; overflow-y: auto; height: 100vh; background: #0f172a; color: #f8fafc; }
+    .app-title { font-weight: 700; font-size: 1rem; color: #f8fafc; white-space: nowrap; }
+    .app-tabs { display: flex; gap: 4px; flex: 1; }
+    .app-tab {
+      background: transparent; border: none; color: #94a3b8; padding: 6px 18px;
+      border-radius: 6px; font-size: 0.9rem; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+    .app-tab:hover { background: rgba(255,255,255,0.07); color: #f8fafc; }
+    .app-tab.active { background: rgba(168,85,247,0.18); color: #d8b4fe; }
+    .main-content { overflow-y: auto; height: calc(100vh - 52px); background: #0f172a; color: #f8fafc; padding: 24px; }
     .content-pane { display: none; }
     .content-pane.active { display: block; animation: fadeIn 0.3s ease; }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .tab-canvas {
-      position: relative; width: 100%; min-height: 400px;
-    }
-    .component { position: absolute; border: 1px solid #dee2e6; background: #fff; padding: 4px; box-sizing: border-box; border-radius: 6px; max-width: calc(100% - 48px); }
-    .c-html { display: block; overflow: auto; background: transparent; border: none; }
-    .c-input { display: flex; flex-direction: column; gap: 2px; }
-    .c-radio-check { display: flex; flex-direction: column; gap: 0; }
-    .c-table { display: flex; flex-direction: column; padding: 0; overflow: hidden; }
-    .c-button { display: flex; justify-content: center; align-items: center; background: transparent; border: none; padding: 4px; }
-    .c-button button { width: 100%; height: 100%; }
     
     .glb-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 999999 !important; opacity: 0; pointer-events: none; transition: opacity 0.2s; backdrop-filter: blur(2px); }
     .glb-overlay.show { opacity: 1; pointer-events: auto; }
@@ -66,7 +60,6 @@ require_once __DIR__ . '/common.php';
     .glb-progress-label { font-size: 0.9rem; font-weight: 600; color: #334155; margin-bottom: 12px; }
     .glb-progress-bar-wrap { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
     .glb-progress-bar-fill { height: 100%; background: #4f46e5; width: 0%; transition: width 0.3s ease; }
-    .sidebar-nav-link.active { background: rgba(255,255,255,0.15); border-radius: 6px; }
     #manual-body { color: #e2e8f0; line-height: 1.75; }
     #manual-body h1, #manual-body h2 { color: #f8fafc; border-bottom: 1px solid rgba(148,163,184,0.2); padding-bottom: 0.3em; margin: 1.5em 0 0.75em; }
     #manual-body h3, #manual-body h4 { color: #cbd5e1; margin: 1.2em 0 0.5em; }
@@ -82,36 +75,19 @@ require_once __DIR__ . '/common.php';
   </style>
 </head>
 <body>
-  <div class="d-flex">
-    <!-- Sidebar -->
-    <nav class="sidebar d-flex flex-column p-3">
-      <div class="d-flex align-items-center gap-2 mb-3 pb-3 border-bottom border-secondary">
-        <button class="btn btn-outline-light btn-sm" onclick="document.querySelector('.sidebar').classList.toggle('closed')" title="メニューの開閉">
-          <span class="material-icons">menu</span>
-        </button>
-        <h5 class="sidebar-title text-white fw-bold mb-0 text-truncate">WebCron ジョブ管理</h5>
-      </div>
-      <ul class="sidebar-content nav flex-column gap-1">
-        <li class="nav-item">
-          <a class="nav-link text-white sidebar-nav-link" href="#" onclick="if(typeof event !== 'undefined') event.preventDefault(); showContentDirect('content-jobs')" data-target="content-jobs">ジョブ管理</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link text-white sidebar-nav-link" href="#" onclick="if(typeof event !== 'undefined') event.preventDefault(); showContentDirect('content-env')" data-target="content-env">環境設定</a>
-        </li>
-        <li class="nav-item mt-auto pt-3 border-top border-secondary">
-          <a class="nav-link text-white sidebar-nav-link" href="#" onclick="if(typeof event !== 'undefined') event.preventDefault(); showContentDirect('content-manual')" data-target="content-manual">使い方</a>
-        </li>
-      </ul>
+  <!-- Header with tabs -->
+  <header class="app-header">
+    <span class="app-title">WebCron</span>
+    <nav class="app-tabs">
+      <button class="app-tab" data-target="content-jobs" onclick="showContent('content-jobs')">ジョブ管理</button>
+      <button class="app-tab" data-target="content-env" onclick="showContent('content-env')">環境設定</button>
+      <button class="app-tab" data-target="content-manual" onclick="showContent('content-manual')">使い方</button>
     </nav>
-
-    <!-- Main Content -->
-    <div class="main-content p-4 position-relative">
-
-    <div class="dropdown position-absolute" style="top: 16px; right: 24px; z-index: 100;">
-      <button id="user-menu-btn" class="btn btn-outline-light rounded-pill d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color:#94a3b8; border-color:rgba(148,163,184,0.3);">
-        <span class="material-icons" style="font-size:20px;">account_circle</span>
+    <div class="dropdown ms-auto">
+      <button id="user-menu-btn" class="btn btn-sm rounded-pill d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="color:#94a3b8; border: 1px solid rgba(148,163,184,0.3);">
+        <span class="material-icons" style="font-size:18px;">account_circle</span>
         <span id="user-name-display">ユーザー名</span>
-        <span class="material-icons" style="font-size:16px;">arrow_drop_down</span>
+        <span class="material-icons" style="font-size:14px;">arrow_drop_down</span>
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item d-flex align-items-center gap-2" href="#" id="user-action-password" onclick="if(typeof event !== 'undefined') event.preventDefault(); console.log('Click: Password Change');">
@@ -122,20 +98,20 @@ require_once __DIR__ . '/common.php';
         </a></li>
       </ul>
     </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <link rel="stylesheet" href="assets/style.css">
 
     <div id="content-jobs" class="content-pane">
-      <h2 class="fw-bold mb-3" style="color:#f8fafc;">ジョブ管理</h2>
-      <link rel="stylesheet" href="assets/style.css">
       <?php if ($message): ?><div class="message success"><?= $message ?></div><?php endif; ?>
       <?php if ($error): ?><div class="message error">🚨 エラー: <?= htmlspecialchars($error) ?></div><?php endif; ?>
       <?php require __DIR__ . '/views/tab_jobs.php'; ?>
-      <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
       <script src="assets/script.js"></script>
     </div>
 
     <div id="content-env" class="content-pane">
-      <h2 class="fw-bold mb-3" style="color:#f8fafc;">環境設定</h2>
-      <link rel="stylesheet" href="assets/style.css">
       <?php if ($message): ?><div class="message success"><?= $message ?></div><?php endif; ?>
       <?php if ($error): ?><div class="message error">🚨 エラー: <?= htmlspecialchars($error) ?></div><?php endif; ?>
       <?php require __DIR__ . '/views/tab_env.php'; ?>
@@ -143,11 +119,7 @@ require_once __DIR__ . '/common.php';
     </div>
 
     <div id="content-manual" class="content-pane">
-      <h2 class="fw-bold mb-3" style="color:#f8fafc;">使い方</h2>
-      <link rel="stylesheet" href="assets/style.css">
       <div id="manual-body" style="max-width: 860px;"></div>
-    </div>
-
     </div>
   </div>
 
@@ -219,35 +191,14 @@ require_once __DIR__ . '/common.php';
     };
 
 
-    function showContentDirect(id) {
-      // Close any open collapse submenus safely
-      if (typeof bootstrap !== 'undefined') {
-        document.querySelectorAll('.sidebar .collapse.show').forEach(el => {
-          bootstrap.Collapse.getOrCreateInstance(el).hide();
-        });
-      }
-      showContent(id);
-    }
     function showContent(id) {
       document.querySelectorAll('.content-pane').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.sidebar-nav-link').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.app-tab').forEach(el => el.classList.remove('active'));
       const target = document.getElementById(id);
-      if (target) {
-        target.classList.add('active');
-        window.dispatchEvent(new CustomEvent('glbContentShown', { detail: { id: id } }));
-      }
-      const navLink = document.querySelector('.sidebar-nav-link[data-target="' + id + '"]');
-      if (navLink) navLink.classList.add('active');
-    }
-      function showTab(paneId, tabId) {
-      const pane = document.getElementById(paneId);
-      if (!pane) return;
-      // Use Bootstrap Tab API
-      const tabEl = pane.querySelector('[data-bs-target="#tab-' + paneId + '-' + tabId + '"]');
-      if (tabEl) {
-        bootstrap.Tab.getOrCreateInstance(tabEl).show();
-      }
-      window.dispatchEvent(new CustomEvent('glbTabShown', { detail: { paneId: paneId, tabId: tabId } }));
+      if (target) target.classList.add('active');
+      const tab = document.querySelector('.app-tab[data-target="' + id + '"]');
+      if (tab) tab.classList.add('active');
+      window.dispatchEvent(new CustomEvent('glbContentShown', { detail: { id: id } }));
     }
 
     // マニュアルの遅延読み込み
@@ -263,9 +214,8 @@ require_once __DIR__ . '/common.php';
       }
     });
 
-    // Automatically open the first menu item on load
     document.addEventListener('DOMContentLoaded', () => {
-      showContentDirect('content-jobs');
+      showContent('content-jobs');
     });
   </script>
   <script src="js/main.js"></script>

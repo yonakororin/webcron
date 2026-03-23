@@ -52,7 +52,7 @@
                         </div>
                     </th>
 
-                    <th>説明</th>
+                    <th style="width: 35%;">説明</th>
 
                 </tr>
             </thead>
@@ -73,27 +73,27 @@
                     <td><code title="<?= htmlspecialchars($job['schedule'], ENT_QUOTES) ?>"><?= htmlspecialchars($job['schedule']) ?></code></td>
                     <td><code title="<?= htmlspecialchars($job['command'], ENT_QUOTES) ?>"><?= highlightCommand($job['command'], $env_names, $wrapper_names) ?></code></td>
                 
-                    <td class="status-cell" style="font-size: 14px; line-height: 1.2; vertical-align: middle;">
+                    <td class="status-cell" style="font-size: 14px; line-height: 1.6; vertical-align: middle;">
                         <?php if (empty($job['start_time'])): ?>
                             <span style="color: #999;">未実行</span>
                         <?php else: ?>
-                            <div style="display: inline;"><span style="color: #0d6efd; font-weight: bold;">開始：</span><?= date('m/d H:i:s', strtotime($job['start_time'])) ?></div>
+                            <div style="display: inline-block; margin-right: 10px;"><span style="color: #0d6efd; font-weight: bold;">開始：</span><?= date('m/d H:i:s', strtotime($job['start_time'])) ?></div>
                             <?php if ($job['end_time']): ?>
-                                <div style="display: inline;"><span style="color:rgb(106, 25, 135); font-weight: bold;">終了：</span><?= date('m/d H:i:s', strtotime($job['end_time'])) ?></div>
-                                <?php if ($job['exit_code'] !== 0 && $job['exit_code'] !== null): ?>
+                                <div style="display: inline-block; margin-right: 10px;"><span style="color:rgb(106, 25, 135); font-weight: bold;">終了：</span><?= date('m/d H:i:s', strtotime($job['end_time'])) ?></div>
+                                <?php if ($job['exit_code'] !== null): ?>
                                     <?php if ($job['exit_code'] == 0): ?>
-                                        <div style="color:rgb(32, 185, 85); font-weight: bold; display: inline;">Err: <?= $job['exit_code'] ?></div>
+                                        <div style="display: inline-block; color: #16a34a; font-weight: bold;">Success</div>
                                     <?php else: ?>
-                                        <div style="color: #dc3545; font-weight: bold; display: inline;">Err: <?= $job['exit_code'] ?></div>
+                                        <div style="display: inline-block; color: #dc3545; font-weight: bold;">Err <?= intval($job['exit_code']) ?></div>
                                     <?php endif; ?>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <div style="display: inline; color: #fd7e14; font-weight: bold;">実行中...</div>
+                                <div style="display: inline-block; color: #fd7e14; font-weight: bold;">実行中...</div>
                             <?php endif; ?>
                         <?php endif; ?>
                     </td>
 
-                    <td><?= htmlspecialchars($job['description']) ?></td>
+                    <td><?= linkifyDescription($job['description']) ?></td>
                 </tr>
                 <?php endforeach; endif; ?>
             </tbody>

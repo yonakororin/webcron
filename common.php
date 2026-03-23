@@ -67,22 +67,21 @@ if (isset($_GET['ajax_status'])) {
                 $html = '<span style="color: #64748b;">未実行</span>';
             } else {
                 $start = date('m/d H:i:s', strtotime($st['start_time']));
-                $html .= '<div style="display: inline;"><span style="color: #38bdf8; font-weight: bold;">開始：</span>' . $start . '</div>';
-                
+                $html .= '<div style="display: inline-block; margin-right: 10px;"><span style="color: #38bdf8; font-weight: bold;">開始：</span>' . $start . '</div>';
+
                 if (!empty($st['end_time'])) {
                     $end = date('m/d H:i:s', strtotime($st['end_time']));
-                    $html .= '<div style="display: inline;"><span style="color:#d8b4fe; font-weight: bold;">終了：</span>' . $end . '</div>';
-                    
+                    $html .= '<div style="display: inline-block; margin-right: 10px;"><span style="color:#d8b4fe; font-weight: bold;">終了：</span>' . $end . '</div>';
+
                     if ($st['exit_code'] !== null) {
-                        if($st['exit_code'] != 0 ) {
-                            $html .= '<div style="display: inline; color: #f87171; font-weight: bold;">Err：' . intval($st['exit_code']) . '</div>';
-                        }
-                        else {
-                            $html .= '<div style="display: inline; color:#4ade80; font-weight: bold;">Err：' . intval($st['exit_code']) . '</div>';
+                        if ($st['exit_code'] == 0) {
+                            $html .= '<div style="display: inline-block; color: #4ade80; font-weight: bold;">Success</div>';
+                        } else {
+                            $html .= '<div style="display: inline-block; color: #f87171; font-weight: bold;">Err ' . intval($st['exit_code']) . '</div>';
                         }
                     }
                 } else {
-                    $html .= '<div style="color: #fb923c; font-weight: bold;">実行中...</div>';
+                    $html .= '<div style="display: inline-block; color: #fb923c; font-weight: bold;">実行中...</div>';
                 }
             }
             $response[$st['id']] = $html;
@@ -135,6 +134,15 @@ if ($db) {
 }
 
 if (!function_exists('highlightCommand')) {
+    function linkifyDescription($text) {
+        $escaped = htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+        return preg_replace(
+            '/https?:\/\/[^\s<>"]+/',
+            '<a href="$0" target="_blank" rel="noopener noreferrer" style="color:#a855f7;">$0</a>',
+            $escaped
+        );
+    }
+
     function highlightCommand($command, $env_names, $wrapper_names) {
         $safe_command = htmlspecialchars($command, ENT_QUOTES, 'UTF-8');
         foreach ($wrapper_names as $name) {
