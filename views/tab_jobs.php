@@ -77,18 +77,18 @@
                         <?php if (empty($job['start_time'])): ?>
                             <span style="color: #999;">未実行</span>
                         <?php else: ?>
-                            <div style="display: inline-block; margin-right: 10px;"><span style="color: #0d6efd; font-weight: bold;">開始：</span><?= date('m/d H:i:s', strtotime($job['start_time'])) ?></div>
+                            <div style="display: inline-block; margin-right: 10px;"><span style="color: #38bdf8; font-weight: bold;">開始：</span><?= date('m/d H:i:s', strtotime($job['start_time'])) ?></div>
                             <?php if ($job['end_time']): ?>
-                                <div style="display: inline-block; margin-right: 10px;"><span style="color:rgb(106, 25, 135); font-weight: bold;">終了：</span><?= date('m/d H:i:s', strtotime($job['end_time'])) ?></div>
+                                <div style="display: inline-block; margin-right: 10px;"><span style="color: #d8b4fe; font-weight: bold;">終了：</span><?= date('m/d H:i:s', strtotime($job['end_time'])) ?></div>
                                 <?php if ($job['exit_code'] !== null): ?>
                                     <?php if ($job['exit_code'] == 0): ?>
-                                        <div style="display: inline-block; color: #16a34a; font-weight: bold;">Success</div>
+                                        <div style="display: inline-block; color: #4ade80; font-weight: bold;">Success</div>
                                     <?php else: ?>
-                                        <div style="display: inline-block; color: #dc3545; font-weight: bold;">Err <?= intval($job['exit_code']) ?></div>
+                                        <div style="display: inline-block; color: #f87171; font-weight: bold;">Err <?= intval($job['exit_code']) ?></div>
                                     <?php endif; ?>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <div style="display: inline-block; color: #fd7e14; font-weight: bold;">実行中...</div>
+                                <div style="display: inline-block; color: #fb923c; font-weight: bold;">実行中...</div>
                             <?php endif; ?>
                         <?php endif; ?>
                     </td>
