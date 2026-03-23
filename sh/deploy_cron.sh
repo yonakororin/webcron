@@ -16,7 +16,8 @@ SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
 
 if [ -n "$CONTAINER" ]; then
     # コンテナモード: トリガーファイルを作成して systemd に任せる
-    touch "$DATA_DIR/.deploy_trigger"
+    # (TRIGGER_FILE はコンテナ内からアクセス可能なパス)
+    touch "$TRIGGER_FILE"
     echo "Deploy trigger created."
 else
     # 直接実行モード: 同期的にデプロイ

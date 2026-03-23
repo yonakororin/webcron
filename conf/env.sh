@@ -33,7 +33,10 @@ PHP_SCRIPT_BASE="/var/www/webcron"
 # crontab の出力先ファイルパス (ホスト上の絶対パス)
 CRONTAB_DEST="/etc/cron.d/web_cron_jobs"
 
-# データディレクトリのホスト上のパス (DB・トリガーファイル等)
-# コンテナモードの場合: volumeのホスト側パス
-# 直接実行モードの場合: config.json の db_path と同じディレクトリ
+# データディレクトリのホスト上のパス (host_deploy.sh・systemd から参照)
 DATA_DIR="/home/ubuntu/.local/share/containers/storage/volumes/podman_webcron-data/_data"
+
+# トリガーファイルのパス (deploy_cron.sh = PHP実行コンテキストから参照)
+# コンテナモード: コンテナ内からアクセス可能なvolumeパスを指定
+# 直接実行モード: この変数は使用されない (host_deploy.sh を直接呼ぶため)
+TRIGGER_FILE="/var/www/webcron-data/.deploy_trigger"
