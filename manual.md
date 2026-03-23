@@ -21,90 +21,128 @@ WebCron は、サーバーの crontab をブラウザ上で管理するツール
 WebCron はコンテナ環境・ホスト直接実行のどちらにも対応しています。
 デプロイ後に編集が必要なファイルは **2つ** だけです。
 
-### 1. `conf/env.sh` — シェルスクリプト用の環境設定
+### 編集ファイル一覧
+
+| ファイル | 用途 |
+|---|---|
+| `conf/env.sh` | シェルスクリプト用の環境設定（モード・パス類） |
+| `config.json` | PHP 用の設定（DB パス・crontab 出力先など） |
+
+---
+
+### モード切り替え
+
+#### ホスト直接実行モード（コンテナなし）
+
+**`conf/env.sh`:**
 
 ```sh
-# コンテナ名 (コンテナ内で動作させる場合に設定。直接実行の場合は空)
-CONTAINER="podman_php_1"
+CONTAINER=""               # 空にするとホスト直接実行モードになる
+CONTAINER_USER=""          # 不使用
 
-# コンテナを起動しているOSユーザー (rootless podman の場合)
-CONTAINER_USER="ubuntu"
-
-# PHPバイナリのパス
-PHP_BIN="/usr/local/bin/php"
-
-# webcron のベースディレクトリ (ホスト上の絶対パス)
+PHP_BIN="php"              # ホストの PHP バイナリ
 WEBCRON_BASE_DIR="/opt/webcron"
+PHP_SCRIPT_BASE="$WEBCRON_BASE_DIR"   # コンテナなしなので同じパス
 
-# PHPスクリプトのベースパス (PHP実行環境から見たパス)
-# ホスト直接実行の場合: WEBCRON_BASE_DIR と同じ
-# コンテナ内実行の場合: コンテナ内でのwebcronのパス (例: /var/www/webcron)
-PHP_SCRIPT_BASE="/var/www/webcron"
-
-# crontab の出力先ファイルパス (ホスト上の絶対パス)
 CRONTAB_DEST="/etc/cron.d/web_cron_jobs"
-
-# データディレクトリのホスト上のパス (DB・トリガーファイル等)
-# コンテナモードの場合: volume のホスト側パス
-# 直接実行モードの場合: config.json の db_path と同じディレクトリ
-DATA_DIR="/var/lib/webcron"
+DATA_DIR="/var/lib/webcron"           # DB と同じディレクトリを推奨
 ```
 
-**モード別の設定早見表:**
-
-| 項目 | コンテナ動作 | ホスト直接動作 |
-|---|---|---|
-| `CONTAINER` | コンテナ名 (例: `podman_php_1`) | `""` (空) |
-| `CONTAINER_USER` | podman を起動しているユーザー | 不使用 |
-| `PHP_BIN` | コンテナ内の PHP パス | ホストの PHP パス (例: `php`) |
-| `PHP_SCRIPT_BASE` | コンテナ内の webcron パス | `WEBCRON_BASE_DIR` と同じ値 |
-| `DATA_DIR` | volume のホスト側パス | DB ファイルと同じディレクトリ |
-
-> `CONTAINER` を空にするだけでホスト直接実行モードになります。
-> `deploy_cron.sh` が `host_deploy.sh` を直接呼び出すよう自動切り替えされます。
-
-### 2. `config.json` — PHP 用の設定
+**`config.json`:**
 
 ```json
 {
-  "db_path": "/var/www/webcron-data/cron.db",
+  "db_path": "/var/lib/webcron/cron.db",
   "updater_path": "./sh/deploy_cron.sh",
-  "back_url": "../../",
   "host_runner": "/opt/webcron/sh/host_runner.sh",
   "crontab_dest": "/etc/cron.d/web_cron_jobs"
 }
 ```
 
-| キー | 説明 |
-|---|---|
-| `db_path` | SQLite DB ファイルのパス (PHP から見たパス) |
-| `updater_path` | デプロイスクリプトのパス (`./sh/deploy_cron.sh` から変更不要) |
-| `back_url` | ヘッダーの戻るリンク先 |
-| `host_runner` | `host_runner.sh` のホスト上の絶対パス |
-| `crontab_dest` | crontab 出力先ファイルのパス (Crontabファイルタブで表示) |
+> systemd の追加設定は不要です。`deploy_cron.sh` が `host_deploy.sh` を直接呼び出します。
 
-### コンテナモードの追加セットアップ
+---
 
-コンテナモードでは、Web UI の操作をトリガーとしてホスト側でデプロイを実行するため、systemd の設定が必要です。
+#### コンテナモード（例: podman）
+
+**`conf/env.sh`:**
+
+```sh
+CONTAINER="podman_php_1"   # PHP コンテナ名
+CONTAINER_USER="ubuntu"    # コンテナを起動しているホスト OS ユーザー
+
+PHP_BIN="/usr/local/bin/php"
+WEBCRON_BASE_DIR="/opt/webcron"
+PHP_SCRIPT_BASE="/var/www/webcron"   # コンテナ内での webcron のパス
+
+CRONTAB_DEST="/etc/cron.d/web_cron_jobs"
+DATA_DIR="/path/to/volume/_data"     # webcron-data volume のホスト側パス
+```
+
+**`config.json`:**
+
+```json
+{
+  "db_path": "/var/www/webcron-data/cron.db",
+  "updater_path": "./sh/deploy_cron.sh",
+  "host_runner": "/opt/webcron/sh/host_runner.sh",
+  "crontab_dest": "/etc/cron.d/web_cron_jobs"
+}
+```
+
+> `db_path` はコンテナ内から見たパスです。`crontab_dest` はホスト上のパスです。
+
+**追加セットアップ（コンテナモードのみ）:**
+
+① systemd ユニットをインストール
 
 ```bash
-# systemd ユニットをインストール
 sudo cp systemd/webcron-deploy.path /etc/systemd/system/
 sudo cp systemd/webcron-deploy.service /etc/systemd/system/
-
-# サービスを有効化・起動
 sudo systemctl daemon-reload
 sudo systemctl enable --now webcron-deploy.path
 ```
 
-また、PHP コンテナが `/etc/cron.d` をホストからマウントできるよう `compose.yml` に追記してください。
+② `conf/env.sh` の `DATA_DIR` に合わせて `systemd/webcron-deploy.path` を更新
+
+```ini
+[Path]
+PathExists=/path/to/volume/_data/.deploy_trigger   # DATA_DIR と同じパス
+```
+
+③ PHP コンテナが `/etc/cron.d` を読めるよう `compose.yml` に追記
 
 ```yaml
 services:
   php:
     volumes:
-      - /etc/cron.d:/etc/cron.d:ro   # 追加
+      - /etc/cron.d:/etc/cron.d:ro
 ```
+
+---
+
+### 設定項目リファレンス
+
+#### `conf/env.sh`
+
+| 項目 | 説明 |
+|---|---|
+| `CONTAINER` | コンテナ名。**空にするとホスト直接実行モード** |
+| `CONTAINER_USER` | rootless podman を起動しているホスト OS ユーザー |
+| `PHP_BIN` | PHP バイナリのパス |
+| `WEBCRON_BASE_DIR` | webcron のホスト上の絶対パス |
+| `PHP_SCRIPT_BASE` | PHP 実行環境から見た webcron のパス（直接実行時は `WEBCRON_BASE_DIR` と同じ） |
+| `CRONTAB_DEST` | crontab の出力先ファイル（ホスト上の絶対パス） |
+| `DATA_DIR` | DB・トリガーファイルを置くホスト上のディレクトリ |
+
+#### `config.json`
+
+| キー | 説明 |
+|---|---|
+| `db_path` | SQLite DB ファイルのパス（**PHP 実行環境から見たパス**） |
+| `updater_path` | デプロイスクリプトのパス（変更不要） |
+| `host_runner` | `host_runner.sh` のホスト上の絶対パス |
+| `crontab_dest` | crontab 出力先ファイルのパス（Crontabファイルタブで表示） |
 
 ---
 
@@ -136,6 +174,15 @@ services:
 # /usr/bin/php /var/www/script.php
 ```
 
+### コマンド列の変数ハイライト
+
+ジョブ一覧のコマンド列で、`${変数名}` 形式の参照箇所が色付きで表示されます。
+
+| 色 | 種別 |
+|---|---|
+| 水色 (bold) | 環境変数（環境設定タブで登録した変数） |
+| 赤 (bold) | ラッパースクリプト定義（環境設定タブで登録したラッパー） |
+
 ### ジョブ一覧の検索
 
 一覧上部の検索ボックスでリアルタイムに絞り込みができます。
@@ -145,15 +192,6 @@ services:
 | スペース区切り | AND 検索 | `php batch` |
 | `!キーワード` | 除外検索 | `!エラー` |
 | `"スペースを含む語"` | フレーズ検索 | `"Err: 0"` |
-
-### コマンド列の変数ハイライト
-
-ジョブ一覧のコマンド列で、`${変数名}` 形式の参照箇所が色付きで表示されます。
-
-| 色 | 種別 |
-|---|---|
-| 水色 (bold) | 環境変数（環境設定タブで登録した変数） |
-| 赤 (bold) | ラッパースクリプト定義（環境設定タブで登録したラッパー） |
 
 ### 実行状況の確認
 
@@ -261,23 +299,21 @@ export RESERVED_ALERT_ENV=production
 ```
 sh/deploy_cron.sh
   └─ sh/host_deploy.sh
-       └─ php/crontab_generator.php  (DBからcrontab内容を生成)
-            └─ CRONTAB_DEST  (conf/env.sh で指定したパスへ出力)
+       └─ php/crontab_generator.php  (DB からcrontab内容を生成)
+            └─ CRONTAB_DEST へ出力  (conf/env.sh の CRONTAB_DEST)
 ```
 
 **コンテナモード:**
 ```
-sh/deploy_cron.sh  (コンテナ内)
-  └─ .deploy_trigger ファイルを作成
+sh/deploy_cron.sh  (コンテナ内から呼ばれる)
+  └─ DATA_DIR/.deploy_trigger を作成
        ↓ systemd webcron-deploy.path が即時検知
-sh/host_deploy.sh  (ホスト側)
+sh/host_deploy.sh  (ホスト側で実行)
   └─ podman exec php/crontab_generator.php
        └─ CRONTAB_DEST へ出力 + crond に HUP シグナル
 ```
 
 ### crontab 生成ルール
-
-生成されるファイルの構造は以下のとおりです。
 
 ```
 # Generated by Web Cron Manager
@@ -285,7 +321,7 @@ SHELL=/bin/bash
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 VARNAME="value"   ← 環境変数
 
-* * * * * ubuntu bash '/opt/webcron/sh/host_runner.sh' <id> '<command>'
+* * * * * <user> bash '/path/to/host_runner.sh' <id> '<command>'
 ```
 
 - 通常のジョブはホスト側の `host_runner.sh` 経由で実行されます
@@ -314,4 +350,4 @@ cron
 ### データ保存先
 
 全データは SQLite データベース（`cron.db`）に保存されます。
-パスは `config.json` の `db_path` で変更可能です。
+パスは `config.json` の `db_path` で変更可能です（PHP 実行環境から見たパスを指定）。
