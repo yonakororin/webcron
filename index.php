@@ -81,6 +81,7 @@ require_once __DIR__ . '/common.php';
     <nav class="app-tabs">
       <button class="app-tab" data-target="content-jobs" onclick="showContent('content-jobs')">ジョブ管理</button>
       <button class="app-tab" data-target="content-env" onclick="showContent('content-env')">環境設定</button>
+      <button class="app-tab" data-target="content-crontab" onclick="showContent('content-crontab')">Crontabファイル</button>
       <button class="app-tab" data-target="content-manual" onclick="showContent('content-manual')">使い方</button>
     </nav>
     <div class="dropdown ms-auto">
@@ -116,6 +117,10 @@ require_once __DIR__ . '/common.php';
       <?php if ($error): ?><div class="message error">🚨 エラー: <?= htmlspecialchars($error) ?></div><?php endif; ?>
       <?php require __DIR__ . '/views/tab_env.php'; ?>
       <script src="assets/script.js"></script>
+    </div>
+
+    <div id="content-crontab" class="content-pane">
+      <?php require __DIR__ . '/views/tab_crontab.php'; ?>
     </div>
 
     <div id="content-manual" class="content-pane">
@@ -200,6 +205,35 @@ require_once __DIR__ . '/common.php';
       if (tab) tab.classList.add('active');
       window.dispatchEvent(new CustomEvent('glbContentShown', { detail: { id: id } }));
     }
+
+    // Crontabファイルの読み込み
+    function loadCrontabFile() {
+      const pre = document.getElementById('crontab-content');
+      const mtime = document.getElementById('crontab-mtime');
+      const path = document.getElementById('crontab-path');
+      pre.textContent = '読み込み中...';
+      fetch('index.php?ajax_crontab=1')
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) {
+            pre.style.color = '#f87171';
+            pre.textContent = 'エラー: ' + data.error;
+          } else {
+            pre.style.color = '#e2e8f0';
+            pre.textContent = data.content;
+            mtime.textContent = '最終更新: ' + data.mtime;
+            path.textContent = data.path;
+          }
+        })
+        .catch(() => {
+          pre.style.color = '#f87171';
+          pre.textContent = '読み込みに失敗しました。';
+        });
+    }
+
+    window.addEventListener('glbContentShown', (e) => {
+      if (e.detail.id === 'content-crontab') loadCrontabFile();
+    });
 
     // マニュアルの遅延読み込み
     let manualLoaded = false;

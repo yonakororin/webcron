@@ -54,6 +54,24 @@ $back_url = $config['back_url'];
 require_once __DIR__ . '/includes/db.php';
 require_once __DIR__ . '/includes/actions.php';
 
+// ★ AJAXによるCrontabファイル取得用API ★
+if (isset($_GET['ajax_crontab'])) {
+    header('Content-Type: application/json');
+    $crontab_file = '/var/www/webcron-data/web_cron_jobs';
+    if (!file_exists($crontab_file)) {
+        echo json_encode(['error' => 'ファイルが見つかりません: ' . $crontab_file]);
+    } else {
+        $content = file_get_contents($crontab_file);
+        $mtime = filemtime($crontab_file);
+        echo json_encode([
+            'content' => $content,
+            'mtime' => date('Y-m-d H:i:s', $mtime),
+            'path' => $crontab_file,
+        ]);
+    }
+    exit;
+}
+
 // ★ AJAXによるステータス取得用API ★
 if (isset($_GET['ajax_status'])) {
     header('Content-Type: application/json');
