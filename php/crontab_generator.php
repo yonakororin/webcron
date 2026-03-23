@@ -15,8 +15,8 @@ if (file_exists($config_file)) {
 $db_path_setting = $config['db_path'];
 $db_file = (strpos($db_path_setting, '/') === 0) ? $db_path_setting : __DIR__ . '/../' . $db_path_setting;
 
-// ★ 新規: ランナースクリプトのパス解決 ★
-$runner_script = __DIR__ . '/cron_runner.php';
+// ホスト側ランナースクリプトのパス解決
+$host_runner = $config['host_runner'] ?? (__DIR__ . '/../sh/host_runner.sh');
 
 try {
     if (!file_exists($db_file)) throw new Exception("Database file not found at: " . $db_file);
@@ -80,10 +80,10 @@ try {
                     // (例: * * * * * root # /path/to/command)
                     echo sprintf("%s %s %s\n", $job['schedule'], $cron_user, $final_command);
                 } else {
-                    // 通常実行: ランナースクリプト経由で実行
+                    // 通常実行: ホスト側ランナー経由で実行 (bashが使える・ホストパスにアクセス可能)
                     $wrapped_cmd = sprintf(
-                        'podman exec podman_php_1 /usr/local/bin/php %s %d %s',
-                        escapeshellarg($runner_script),
+                        'bash %s %d %s',
+                        escapeshellarg($host_runner),
                         $job['id'],
                         escapeshellarg($final_command)
                     );
