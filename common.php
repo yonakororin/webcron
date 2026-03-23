@@ -57,7 +57,7 @@ require_once __DIR__ . '/includes/actions.php';
 // ★ AJAXによるCrontabファイル取得用API ★
 if (isset($_GET['ajax_crontab'])) {
     header('Content-Type: application/json');
-    $crontab_file = '/etc/cron.d/web_cron_jobs';
+    $crontab_file = $config['crontab_dest'] ?? '/etc/cron.d/web_cron_jobs';
     if (!file_exists($crontab_file)) {
         echo json_encode(['error' => 'ファイルが見つかりません: ' . $crontab_file]);
     } else {

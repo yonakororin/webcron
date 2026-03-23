@@ -1,12 +1,24 @@
 #!/bin/sh
-# deploy_cron.sh - ホスト側デプロイのトリガーファイルを作成する
-# コンテナ内から呼ばれる。実際のデプロイはホスト側の host_deploy.sh が行う。
-# (systemd webcron-deploy.path がトリガーファイルを検知し webcron-deploy.service を起動)
+# deploy_cron.sh - crontab デプロイのトリガー
+# webアプリ (PHP) から呼ばれる
+#
+# コンテナモード:
+#   トリガーファイルを作成し、ホスト側の systemd webcron-deploy.path が
+#   host_deploy.sh を起動するのを待つ
+#
+# 直接実行モード (CONTAINER が空):
+#   host_deploy.sh を直接実行する
 
 set -eu
 
-TRIGGER_FILE="/var/www/webcron-data/.deploy_trigger"
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+. "$SCRIPT_DIR/../conf/env.sh"
 
-touch "$TRIGGER_FILE"
-
-echo "Deploy trigger created."
+if [ -n "$CONTAINER" ]; then
+    # コンテナモード: トリガーファイルを作成して systemd に任せる
+    touch "$DATA_DIR/.deploy_trigger"
+    echo "Deploy trigger created."
+else
+    # 直接実行モード: 同期的にデプロイ
+    exec "$SCRIPT_DIR/host_deploy.sh"
+fi
