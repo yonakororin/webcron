@@ -45,7 +45,7 @@
                     <th>コマンド</th>
                     <th style="vertical-align: middle;">
                         実行状況確認
-                        <div style="font-size: 10px; font-weight: normal; margin-top: 2px; display: inline;">
+                        <div style="font-size: 10px; font-weight: normal; margin-top: 2px; display: inline; margin-left: 8px;">
                             <label style="cursor: pointer;">
                                 <input type="checkbox" id="statusPollingToggle" style="vertical-align: middle;">自動更新(1分)
                             </label>
