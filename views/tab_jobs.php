@@ -10,7 +10,7 @@
     </form>
     
     <div class="form-actions">
-        <div class="actions-left">
+        <div class="actions-right" style="margin-left: auto;">
             <input type="submit" value="ジョブを更新" form="editJobForm">
             <a href="<?= $_SERVER['PHP_SELF'] ?>" class="cancel-button">キャンセル</a>
             <input type="submit" name="delete" value="削除" onclick="return confirm('削除しますか？');" class="delete-submit-button" form="editJobForm">
