@@ -1,0 +1,9 @@
+[Unit]
+Description=Watch for WebCron deploy trigger
+
+[Path]
+PathExists=/home/ubuntu/.local/share/containers/storage/volumes/podman_webcron-data/_data/.deploy_trigger
+Unit=webcron-deploy.service
+
+[Install]
+WantedBy=multi-user.target
