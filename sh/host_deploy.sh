@@ -10,9 +10,7 @@ PHP_BIN="/usr/local/bin/php"
 GENERATOR="/var/www/webcron/php/crontab_generator.php"
 DEST_CRON="/etc/cron.d/web_cron_jobs"
 
-# volume内パス (Crontabファイル閲覧タブ用にも書き込む)
 VOLUME_DATA_DIR="/home/ubuntu/.local/share/containers/storage/volumes/podman_webcron-data/_data"
-VOLUME_CRON_FILE="$VOLUME_DATA_DIR/web_cron_jobs"
 TRIGGER_FILE="$VOLUME_DATA_DIR/.deploy_trigger"
 
 TEMP_FILE=$(mktemp)
@@ -29,10 +27,6 @@ fi
 # /etc/cron.d/ へ反映
 mv "$TEMP_FILE" "$DEST_CRON"
 chmod 644 "$DEST_CRON"
-
-# volume内のファイルも更新 (Crontabファイル閲覧タブ用)
-cp "$DEST_CRON" "$VOLUME_CRON_FILE"
-chmod 644 "$VOLUME_CRON_FILE"
 
 # crond に即時再読み込みさせる
 if [ -f /var/run/crond.pid ]; then
