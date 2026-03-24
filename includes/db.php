@@ -1,6 +1,11 @@
 <?php
 // includes/db.php
 
+$db_dir = dirname($db_file);
+if (!is_dir($db_dir)) {
+    mkdir($db_dir, 0755, true);
+}
+
 try {
     $db = new PDO("sqlite:$db_file");
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
