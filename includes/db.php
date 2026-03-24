@@ -3,7 +3,13 @@
 
 $db_dir = dirname($db_file);
 if (!is_dir($db_dir)) {
-    mkdir($db_dir, 0755, true);
+    if (!@mkdir($db_dir, 0755, true)) {
+        echo "<div style='color:red; font-weight:bold;'>データディレクトリを作成できませんでした: " . htmlspecialchars($db_dir) . "<br>"
+           . "以下のコマンドで手動作成してください:<br>"
+           . "<code>sudo mkdir -p " . htmlspecialchars($db_dir) . " &amp;&amp; sudo chown $(whoami) " . htmlspecialchars($db_dir) . "</code></div>";
+        $db = null;
+        return;
+    }
 }
 
 try {
