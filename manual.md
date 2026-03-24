@@ -357,3 +357,49 @@ cron
 
 全データは SQLite データベース（`cron.db`）に保存されます。
 パスは `config.json` の `db_path` で変更可能です（PHP 実行環境から見たパスを指定）。
+
+#### ホスト直接実行モード
+
+`db_path` にはホスト上の書き込み可能なパスを指定します。
+ディレクトリが存在しない場合は PHP プロセスが自動作成を試みますが、権限がない場合は手動で作成してください。
+
+```bash
+sudo mkdir -p /var/lib/webcron
+sudo chown <PHPを実行するユーザー> /var/lib/webcron
+```
+
+`config.json` の設定例:
+
+```json
+"db_path": "/var/lib/webcron/cron.db"
+```
+
+#### コンテナモード（podman / Docker）
+
+`db_path` にはコンテナ内から見たボリュームのマウントパスを指定します（ホスト上のパスではありません）。
+
+```json
+"db_path": "/var/www/webcron-data/cron.db"
+```
+
+PHP コンテナ内のプロセスは通常 `www-data`（uid=33）で動作します。
+ボリュームのホスト側ディレクトリがこのユーザーから書き込めるよう、以下のいずれかで権限を設定してください。
+
+**rootless podman の場合:**
+
+コンテナ内の uid=33 はホスト上の subuid にマップされます。`podman unshare` を使うことでマップ後の uid として chown できます。
+
+```bash
+podman unshare chown -R 33:33 \
+  $(podman volume inspect webcron-data --format '{{.Mountpoint}}')
+```
+
+**compose.yml で PHP プロセスのユーザーを明示する場合:**
+
+```yaml
+services:
+  php:
+    user: "33:33"
+```
+
+> ディレクトリが存在しない場合、PHP プロセスが自動作成を試みます。権限不足で失敗した場合はエラーメッセージに手順が表示されます。
