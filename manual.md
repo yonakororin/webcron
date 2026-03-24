@@ -28,6 +28,12 @@ WebCron はコンテナ環境・ホスト直接実行のどちらにも対応し
 | `conf/env.sh` | シェルスクリプト用の環境設定（モード・パス類） |
 | `config.json` | PHP 用の設定（DB パス・crontab 出力先など） |
 
+`config.json` はリポジトリに含まれていません。テンプレートファイル `config.json.example` をコピーして作成してください。
+
+```bash
+cp config.json.example config.json
+```
+
 ---
 
 ### モード切り替え
